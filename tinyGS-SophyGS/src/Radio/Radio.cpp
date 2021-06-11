@@ -23,18 +23,24 @@
 #include <base64.h>
 #include "../Logger/Logger.h"
 
+#include "src/relay/relay.h"             // - ve3gtc - 2021-04-15
+
 bool received = false;
 bool eInterrupt = true;
 bool noisyInterrupt = false;
 
 Radio::Radio()
-: spi(VSPI)
+: spi(VSPI), lnaRelay(lnaRelayIoPin, true), txRelay(txRelayIoPin, true)
 {
-  
+                                         // - ve3gtc - 2021-04-15
+  lnaRelay.begin();                      // - functionality to control LNA bypass and TX PA power amplifier switching
+  txRelay.begin();                       //
+                                         //
 }
 
 void Radio::init()
 {
+
   Log::console(PSTR("[SX12xx] Initializing ... "));
   board_type board;
   
@@ -88,6 +94,7 @@ void Radio::init()
 
 int16_t Radio::begin()
 {
+
   status.radio_ready = false;
   board_type board = ConfigManager::getInstance().getBoardConfig();
   const char* modemConfig = ConfigManager::getInstance().getModemStartup();
@@ -243,7 +250,12 @@ int16_t Radio::begin()
   }
 
   status.radio_ready = true;
-  return state;
+                                       // - ve3gtc - 2021-05-14
+                                       // - relay control for remote LNA and PA power amplifier
+  lnaRelay.turnOn();                   // - initial state of lnaRelay should be ON so that the LNA is NOT bypassed
+  txRelay.turnOff();                   // - intial state of txRelay should be OFF so that the PA power amplifier is OFF
+                                       //
+   return state;
 }
 
 void Radio::setFlag()
@@ -269,7 +281,12 @@ void Radio::disableInterrupt()
 
 void Radio::startRx()
 {
-    // put module back to listen mode
+  // put module back to listen mode
+                                                // - ve3gtc - 2021-05-15 
+  txRelay.turnOff();                            // - turn OFF PA Power Amplifer
+  lnaRelay.turnOn();                            // - turn ON LNA relay so that LNA is NOT bypassed
+                                                //
+
   if (ConfigManager::getInstance().getBoardConfig().L_SX127X)
     ((SX1278*)lora)->startReceive();
   else
@@ -287,6 +304,13 @@ int16_t Radio::sendTx(uint8_t* data, size_t length)
       Log::error(PSTR("TX disabled by config"));
       return -1;
   }
+                                                // - ve3gtc - 2021-05-15 
+  lnaRelay.turnOff();                           // - turn OFF LNA relay so that LNA is bypassed
+  lnaRelay.relayDelay( lnaRelayDelay );         // - delay to ensure LNA relays have settled
+  txRelay.turnOn();                             // - turn ON PA Power Amplifer
+  txRelay.relayDelay( txRelayDelay );           // - short to ensure PA Power Amplifier relays have settled
+                                                //
+ 
   disableInterrupt();
 
   // send data
@@ -307,6 +331,10 @@ int16_t Radio::sendTx(uint8_t* data, size_t length)
   }
 
   enableInterrupt();
+                                                // - ve3gtc - 2021-05-15 
+  txRelay.turnOff();                            // - turn OFF PA Power Amplifer
+  lnaRelay.turnOn();                            // - turn ON LNA relay so that LNA is NOT bypassed
+                                                //
   return state;
 }
 
@@ -1017,3 +1045,4 @@ int Radio::_atoi(const char* buff, size_t length)
   str[length] = '\0';
   return atoi(str);
 }
+

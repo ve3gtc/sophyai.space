@@ -24,11 +24,21 @@
 #ifndef RADIOLIB_GODMODE
 #define RADIOLIB_GODMODE
 #endif
+
 #include <RadioLib.h>
 #include "../ConfigManager/ConfigManager.h"
 #include "../Status.h"
 #include "../Mqtt/MQTT_Client.h"
 #include "../Mqtt/MQTT_Client_Fees.h"
+
+#include "src/relay/relay.h"             // - ve3gtc - 2021-05-15
+                                         // - use caution when picking which ESP32 IO pins to use
+                                         // - for example, IO12 should NOT be used as the generic Chinese relay modules pull their 
+                                         //   control HIGH which will caused the ESP32 to boot or be able to programmed
+const int lnaRelayIoPin = 13;            // - ESP32 IO pin to use for LNA relay control
+const int lnaRelayDelay = 50;            // - milliseconds delay for LNA relays to settle primarily used before transmitting
+const int txRelayIoPin  = 17;            // - ESP32 IO pin to use for tx PA Power Amaplifier relay control
+const int txRelayDelay  = 50;            // - milliseconds delay for PA power amplifier to settle
 
 extern Status status;
 
@@ -68,7 +78,7 @@ public:
   int16_t remote_SPIreadRegister(char* payload, size_t payload_len);
   int16_t sendTx(uint8_t* data, size_t length);
   int16_t sendTestPacket();
-   
+
 private:
   Radio();
   PhysicalLayer* lora;
@@ -79,6 +89,10 @@ private:
 
   double _atof(const char* buff, size_t length);
   int _atoi(const char* buff, size_t length);
+
+  Relay lnaRelay;
+  Relay txRelay;
+
 };
 
 #endif

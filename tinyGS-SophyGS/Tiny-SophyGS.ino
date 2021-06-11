@@ -69,6 +69,7 @@
 #else
 #include "WProgram.h"
 #endif
+
 #include "src/ConfigManager/ConfigManager.h"
 #include "src/Display/Display.h"
 #include "src/Mqtt/MQTT_Client.h"
@@ -79,6 +80,12 @@
 #include "src/OTA/OTA.h"
 #include <ESPNtpClient.h>
 #include "src/Logger/Logger.h"
+
+#include "src/relay/relay.h"             // - ve3gtc - 2021-05-15
+                                         // - use caution when picking which ESP32 IO pins to use
+                                         // - for example, IO12 should NOT be used as the generic Chinese relay modules pull their 
+                                         //   control HIGH which will caused the ESP32 to boot or be able to programmed
+
 /* Arduino P13 */
 #include <ArduinoP13.h>
 #define MAP_MAXX   128
@@ -137,6 +144,7 @@ int          aiSatFP[32][2];          // Array for storing the satellite footpri
 int          aiSunFP[32][2];          // Array for storing the sunlight footprint map coordinates
 
 /* End Arduino P13*/
+
 #if  RADIOLIB_VERSION_MAJOR != (0x04) || RADIOLIB_VERSION_MINOR != (0x02) || RADIOLIB_VERSION_PATCH != (0x01) || RADIOLIB_VERSION_EXTRA != (0x00)
 #error "You are not using the correct version of RadioLib please copy TinyGS/lib/RadioLib on Arduino/libraries"
 #endif
@@ -157,7 +165,6 @@ void printLocalTime();
 // Global status
 Status status;
 Status status_sophy;
-
 
 void printControls();
 void switchTestmode();
@@ -235,7 +242,7 @@ if (millis() - last_check > check_time)
   */
   Log::console("\r\nPrediction for %s at %s (MAP %dx%d: x = %d,y = %d):\r\n\r\n", MySAT.name, MyQTH.name, MAP_MAXX, MAP_MAXY, ixQTH, iyQTH);
 
-   MyTime.ascii(acBuffer);             // Get time for prediction as ASCII string
+  MyTime.ascii(acBuffer);             // Get time for prediction as ASCII string
   MySAT.predict(MyTime);              // Predict ISS for specific time
   MySAT.latlon(dSatLAT, dSatLON);     // Get the rectangular coordinates
   MySAT.elaz(MyQTH, dSatEL, dSatAZ);  // Get azimut and elevation for MyQTH
@@ -294,8 +301,6 @@ void setup()
   }
 
   printControls();
-
-
 
 }
 
