@@ -1,0 +1,10 @@
+{
+  "version": 2,
+  "dgSpecHash": "rRGgzcViBLQpsGI0c2x1Ld7n9Bt3zNGePRQrJFV7FCUkyqpXBiW0uhxzp7hCS7SWbb9WhOCVPEW65r6mffJrNw==",
+  "success": true,
+  "projectFilePath": "D:\\Lavoro\\Progetti 2021\\sophyai.space\\Tools\\SophyAIGsDesktop\\SophyAIGsDesktop.vbproj",
+  "expectedPackageFiles": [
+    "C:\\Users\\SophyAIDEV\\.nuget\\packages\\mqttnet\\3.0.15\\mqttnet.3.0.15.nupkg.sha512"
+  ],
+  "logs": []
+}
